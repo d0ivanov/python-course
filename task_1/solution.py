@@ -1,4 +1,4 @@
-def accumulate_left(func, acc, collectiom):
+def accumulate_left(func, acc, collection):
     return 1.0
 
 

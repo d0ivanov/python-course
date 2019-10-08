@@ -9,7 +9,7 @@ class SolutionTest(unittest.TestCase):
         self.assertEqual(1.0, res)
 
     def test_accumulate_right(self):
-        res = solution.accumulate_right(lambda a, b: a / b, [8, 12, 24, 4], 2)
+        res = solution.accumulate_right(lambda a, b: a / b, 2, [8, 12, 24, 4])
         self.assertEqual(4.0, res)
 
 
