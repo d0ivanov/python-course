@@ -4,31 +4,20 @@ import solution
 
 class SolutionTest(unittest.TestCase):
 
-    def contains(self, elem, lst):
-        if lst == []:
-            return False
-        elif elem == lst[0]:
-            return True
-        else:
-            return self.contains(elem, lst[1:])
-
     def test_group_by_f_even(self):
         res = solution.group_by_f(lambda a: a %
                                   2 == 0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-        even_nums = map(lambda elem: self.contains(
-            elem, res[True]), [2, 4, 6, 8, 10])
-        odd_nums = map(lambda elem: self.contains(
-            elem, res[False]), [1, 3, 5, 7, 9])
+        even_nums = map(lambda elem: elem in res[True], [2, 4, 6, 8, 10])
+        odd_nums = map(lambda elem: elem in res[False], [1, 3, 5, 7, 9])
         self.assertTrue(all(even_nums))
         self.assertTrue(all(odd_nums))
 
     def test_group_by_f_len(self):
         res = solution.group_by_f(
             len, [[1], [7, 8], [1, 2, 3, 4], [4], ["random", "words"]])
-        len_1 = map(lambda elem: self.contains(elem, res[1]), [[1], [4]])
-        len_2 = map(lambda elem: self.contains(
-            elem, res[2]), [[7, 8], ['random', 'words']])
-        len_4 = map(lambda elem: self.contains(elem, res[4]), [[1, 2, 3, 4]])
+        len_1 = map(lambda elem: elem in res[1], [[1], [4]])
+        len_2 = map(lambda elem: elem in res[2], [[7, 8], ['random', 'words']])
+        len_4 = map(lambda elem: elem in res[4], [[1, 2, 3, 4]])
 
         self.assertTrue(all(len_1))
         self.assertTrue(all(len_2))
