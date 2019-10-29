@@ -42,7 +42,6 @@ RIGHT = [1, 0]
 LEFT = [-1, 0]
 
 
-
 def cells(width, height):
     cells = []
     for i in range(width):
@@ -134,5 +133,8 @@ if __name__ == "__main__":
         elif k == keys.RIGHT and last_direction != LEFT:
             snake = move(snake, RIGHT)
             last_direction = RIGHT
+        if snake[-1] in food:
+            snake = grow(snake, last_direction)
+            food = new_food(food, snake, (width, height))
 
 
