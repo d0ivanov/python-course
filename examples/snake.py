@@ -1,4 +1,5 @@
 import random
+import time
 from getkey import getkey, keys
 import subprocess
 
@@ -35,10 +36,12 @@ import subprocess
 #   ------------------->
 #      0  1  2  3  4   x
 
-UP = [0, 1]
-DOWN = [0, -1]
+UP = [0, -1]
+DOWN = [0, 1]
 RIGHT = [1, 0]
 LEFT = [-1, 0]
+
+
 
 def cells(width, height):
     cells = []
@@ -51,9 +54,7 @@ def cells(width, height):
 
 
 def grow(snake, direction):
-    curr_head = snake[-1]
-    new_head = [curr_head[0] + direction[0], curr_head[1] + direction[1]]
-    return snake + new_head
+    return snake + [[snake[-1][0] + direction[0], snake[-1][1] + direction[1]]]
 
 
 def move(snake, direction):
@@ -65,7 +66,7 @@ def new_food(food, snake, dimensions):
     for position in cells(*dimensions):
         if position not in food and position not in snake:
             possible_positions.append(position)
-    return random.choice(possible_positions)
+    return [random.choice(possible_positions)]
     # Или с list comrehension
     #return random.choice([ position for position in cells(*dimensions)
     #    if position not in food and position not in snake ])
@@ -88,3 +89,46 @@ def is_snake(position, snake):
 def clear_screen():
     subprocess.call('clear',shell=True)
 
+
+def get_snake_direction(key_input, current_direction):
+    if current_direction == UP or current_direction == DOWN:
+        if key_input == keys.LEFT:
+            return LEFT
+        if key_input == keys.RIGHT:
+            return RIGHT
+    if current_direction == LEFT or current_direction == RIGHT:
+        if key_input == keys.UP:
+            return UP
+        if key_input == keys.DOWN:
+            return DOWN
+    return current_direction
+
+
+def read_key(valid_keys = [keys.UP, keys.LEFT, keys.RIGHT, keys.DOWN]):
+    key = getkey()
+    while key not in valid_keys:
+        key = getkey()
+    return key
+
+
+def print_board(snake, food, width, height):
+    for y in range(height):
+        for x in range(width):
+            if [x, y] in snake:
+                if [x, y] == snake[-1]:
+                    print("[ @  ]", end = " ")
+                else:
+                    print("[ *  ]", end = " ")
+            elif [x, y] in food:
+                print("[ #  ]", end = " ")
+            else:
+                print("[{}, {}]".format(x, y), end = " ")
+        print()
+
+
+if __name__ == "__main__":
+    width, height = 10, 10
+    snake = [[5, 5], [5, 4], [5, 3]]
+    food = [[2, 3]]
+    clear_screen()
+    print_board(snake, food, width, height)
