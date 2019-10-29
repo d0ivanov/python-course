@@ -90,20 +90,6 @@ def clear_screen():
     subprocess.call('clear',shell=True)
 
 
-def get_snake_direction(key_input, current_direction):
-    if current_direction == UP or current_direction == DOWN:
-        if key_input == keys.LEFT:
-            return LEFT
-        if key_input == keys.RIGHT:
-            return RIGHT
-    if current_direction == LEFT or current_direction == RIGHT:
-        if key_input == keys.UP:
-            return UP
-        if key_input == keys.DOWN:
-            return DOWN
-    return current_direction
-
-
 def read_key(valid_keys = [keys.UP, keys.LEFT, keys.RIGHT, keys.DOWN]):
     key = getkey()
     while key not in valid_keys:
@@ -130,5 +116,23 @@ if __name__ == "__main__":
     width, height = 10, 10
     snake = [[5, 5], [5, 4], [5, 3]]
     food = [[2, 3]]
-    clear_screen()
-    print_board(snake, food, width, height)
+    last_direction = UP
+
+    while True:
+        clear_screen()
+        print_board(snake, food, width, height)
+        k = read_key()
+        if k == keys.UP and last_direction != DOWN:
+            snake = move(snake, UP)
+            last_direction = UP
+        elif k == keys.DOWN and last_direction != UP:
+            snake = move(snake, DOWN)
+            last_direction = DOWN
+        elif k == keys.LEFT and last_direction != RIGHT:
+            snake = move(snake, LEFT)
+            last_direction = LEFT
+        elif k == keys.RIGHT and last_direction != LEFT:
+            snake = move(snake, RIGHT)
+            last_direction = RIGHT
+
+
