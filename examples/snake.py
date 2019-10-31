@@ -110,31 +110,32 @@ def print_board(snake, food, width, height):
                 print("[{}, {}]".format(x, y), end = " ")
         print()
 
+def get_snake_next_direction(current_direction, key):
+    if key == keys.UP and current_direction != DOWN:
+        return  UP
+    elif key == keys.DOWN and current_direction != UP:
+        return  DOWN
+    elif key == keys.LEFT and current_direction != RIGHT:
+        return  LEFT
+    elif key == keys.RIGHT and current_direction != LEFT:
+        return  RIGHT
+    return current_direction
+
 
 if __name__ == "__main__":
     width, height = 10, 10
     snake = [[5, 5], [5, 4], [5, 3]]
     food = [[2, 3]]
-    last_direction = UP
+    direction = UP
 
     while True:
         clear_screen()
         print_board(snake, food, width, height)
-        k = read_key()
-        if k == keys.UP and last_direction != DOWN:
-            snake = move(snake, UP)
-            last_direction = UP
-        elif k == keys.DOWN and last_direction != UP:
-            snake = move(snake, DOWN)
-            last_direction = DOWN
-        elif k == keys.LEFT and last_direction != RIGHT:
-            snake = move(snake, LEFT)
-            last_direction = LEFT
-        elif k == keys.RIGHT and last_direction != LEFT:
-            snake = move(snake, RIGHT)
-            last_direction = RIGHT
+        key = read_key()
+        direction = get_snake_next_direction(direction, key)
+        snake = move(snake, direction)
         if snake[-1] in food:
-            snake = grow(snake, last_direction)
+            snake = grow(snake, direction)
             food = new_food(food, snake, (width, height))
 
 
