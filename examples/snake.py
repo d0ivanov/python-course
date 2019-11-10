@@ -1,7 +1,9 @@
 import random
 import time
-from getkey import getkey, keys
 import subprocess
+import sys
+
+from getkey import getkey, keys
 
 # snake - масив с всички последователни позиции, на които е разположена змията,
 #         като на последната позиция се намира главата.
@@ -85,6 +87,10 @@ def is_snake(position, snake):
     return position in snake
 
 
+def is_food(position, food):
+    return position in food
+
+
 def clear_screen():
     subprocess.call('clear',shell=True)
 
@@ -96,7 +102,8 @@ def read_key(valid_keys = [keys.UP, keys.LEFT, keys.RIGHT, keys.DOWN]):
     return key
 
 
-def print_board(snake, food, width, height):
+def print_board(snake, food, dimentions):
+    width, height = dimentions
     for y in range(height):
         for x in range(width):
             if [x, y] in snake:
@@ -109,6 +116,7 @@ def print_board(snake, food, width, height):
             else:
                 print("[{}, {}]".format(x, y), end = " ")
         print()
+
 
 def get_snake_next_direction(current_direction, key):
     if key == keys.UP and current_direction != DOWN:
@@ -123,19 +131,22 @@ def get_snake_next_direction(current_direction, key):
 
 
 if __name__ == "__main__":
-    width, height = 10, 10
+    dimentions = (10, 10)
     snake = [[5, 5], [5, 4], [5, 3]]
     food = [[2, 3]]
     direction = UP
 
     while True:
         clear_screen()
-        print_board(snake, food, width, height)
+        print_board(snake, food, dimentions)
         key = read_key()
         direction = get_snake_next_direction(direction, key)
         snake = move(snake, direction)
-        if snake[-1] in food:
+        snake_body = snake[:-1]
+        if is_food(snake[-1], food):
             snake = grow(snake, direction)
-            food = new_food(food, snake, (width, height))
-
-
+            food = new_food(food, snake, dimentions)
+        elif is_wall(snake[-1], dimentions) or is_snake(snake[-1], snake[:-1]):
+            clear_screen()
+            print("Game over!")
+            sys.exit(0)
