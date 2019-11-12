@@ -23,6 +23,9 @@ class SolutionTest(unittest.TestCase):
         self.assertTrue(all(len_2))
         self.assertTrue(all(len_4))
 
+    def test_group_by_f_empty_list(self):
+        self.assertEqual(solution.group_by_f(len, []), {})
+
     def test_is_stronger_base_case(self):
         A = ("A", [("p", 5), ("q", 3), ("t", 9), ("x", 7)])
         B = ("B", [("p", 5), ("q", 3), ("t", 6), ("x", 7)])
@@ -47,8 +50,14 @@ class SolutionTest(unittest.TestCase):
                    ("new2", 20), ("new3", 4), ("t", 9), ("new4", 5)])
         self.assertFalse(solution.is_stronger(A, A))
 
-    def test_is_stronger_missing_ingr(self):
+    def test_is_stronger_missing_ingr_and_equal_quantities(self):
         A = ("A", [("p", 5), ("r", 7), ("t", 6)])
+        B = ("B", [("p", 5), ("q", 3), ("t", 6)])
+        self.assertFalse(solution.is_stronger(A, B))
+        self.assertFalse(solution.is_stronger(B, A))
+
+    def test_is_stronger_missing_ingr_and_bigger_quantites(self):
+        A = ("A", [("p", 8), ("r", 7), ("t", 6)])
         B = ("B", [("p", 5), ("q", 3), ("t", 6)])
         self.assertFalse(solution.is_stronger(A, B))
         self.assertFalse(solution.is_stronger(B, A))
