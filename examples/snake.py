@@ -3,6 +3,7 @@ import time
 import subprocess
 import sys
 
+from enum import Enum
 from getkey import getkey, keys
 
 # snake - масив с всички последователни позиции, на които е разположена змията,
@@ -38,10 +39,15 @@ from getkey import getkey, keys
 #   ------------------->
 #      0  1  2  3  4   x
 
-UP = [0, -1]
-DOWN = [0, 1]
-RIGHT = [1, 0]
-LEFT = [-1, 0]
+
+class Direction(Enum):
+    UP = [0, -1]
+    DOWN = [0, 1]
+    RIGHT = [1, 0]
+    LEFT = [-1, 0]
+
+    def __getitem__(self, index):
+        return self.value[index]
 
 
 def cells(width, height):
@@ -54,18 +60,10 @@ def cells(width, height):
     #return [ [i, j] for j in range(width) for i in range(height) ]
 
 
-def grow(snake, direction):
-    return snake + [[snake[-1][0] + direction[0], snake[-1][1] + direction[1]]]
-
-
-def move(snake, direction):
-    return grow(snake, direction)[1:]
-
-
 def new_food(food, snake, dimensions):
     possible_positions = []
     for position in cells(*dimensions):
-        if position not in food and position not in snake:
+        if position not in food and position not in snake.full_body:
             possible_positions.append(position)
     return [random.choice(possible_positions)]
     # Или с list comrehension
@@ -83,10 +81,6 @@ def is_wall(position, dimensions):
     return position[0] >= dimensions[0] or position[1] >= dimensions[1]
 
 
-def is_snake(position, snake):
-    return position in snake
-
-
 def is_food(position, food):
     return position in food
 
@@ -102,51 +96,89 @@ def read_key(valid_keys = [keys.UP, keys.LEFT, keys.RIGHT, keys.DOWN]):
     return key
 
 
+def end_game():
+    clear_screen()
+    print("Game over!")
+    sys.exit(0)
+
+
 def print_board(snake, food, dimentions):
     width, height = dimentions
     for y in range(height):
         for x in range(width):
-            if [x, y] in snake:
-                if [x, y] == snake[-1]:
-                    print("[ @  ]", end = " ")
-                else:
-                    print("[ *  ]", end = " ")
+            if [x, y] == snake.head:
+                print("@", end = " ")
+            elif [x, y] in snake.body:
+                print("*", end = " ")
             elif [x, y] in food:
-                print("[ #  ]", end = " ")
+                print("#", end = " ")
             else:
-                print("[{}, {}]".format(x, y), end = " ")
+                print(" ", end = " ")
         print()
 
 
 def get_snake_next_direction(current_direction, key):
-    if key == keys.UP and current_direction != DOWN:
-        return  UP
-    elif key == keys.DOWN and current_direction != UP:
-        return  DOWN
-    elif key == keys.LEFT and current_direction != RIGHT:
-        return  LEFT
-    elif key == keys.RIGHT and current_direction != LEFT:
-        return  RIGHT
+    if key == keys.UP and current_direction != Direction.DOWN:
+        return  Direction.UP
+    elif key == keys.DOWN and current_direction != Direction.UP:
+        return  Direction.DOWN
+    elif key == keys.LEFT and current_direction != Direction.RIGHT:
+        return  Direction.LEFT
+    elif key == keys.RIGHT and current_direction != Direction.LEFT:
+        return  Direction.RIGHT
     return current_direction
+
+
+class Snake(object):
+
+    def __init__(self, body, direction):
+        self.__body = body
+        self.direction = direction
+
+    @property
+    def head(self):
+        return self.__body[-1]
+
+    @property
+    def body(self):
+        return self.__body[:-1]
+
+    @property
+    def full_body(self):
+        return self.__body
+
+    def grow(self, direction):
+        return Snake(self.__grow(direction), direction)
+
+    def move(self, direction):
+        return Snake(self.__move(direction), direction)
+
+    def __grow(self, direction):
+        new_head = [self.head[0] + direction[0], self.head[1] + direction[1]]
+        if new_head in self.__body:
+            raise RuntimeError("Snake cannot grow into itself")
+        return self.__body + [new_head]
+
+    def __move(self, direction):
+        return self.__grow(direction)[1:]
 
 
 if __name__ == "__main__":
     dimentions = (10, 10)
-    snake = [[5, 5], [5, 4], [5, 3]]
+    snake = Snake([[5, 5], [5, 4], [5, 3]], Direction.UP)
     food = [[2, 3]]
-    direction = UP
 
     while True:
         clear_screen()
         print_board(snake, food, dimentions)
         key = read_key()
-        direction = get_snake_next_direction(direction, key)
-        snake = move(snake, direction)
-        snake_body = snake[:-1]
-        if is_food(snake[-1], food):
-            snake = grow(snake, direction)
+        direction = get_snake_next_direction(snake.direction, key)
+        try:
+            snake = snake.move(direction)
+        except RuntimeError as err:
+            end_game()
+        if is_food(snake.head, food):
+            snake = snake.grow(direction)
             food = new_food(food, snake, dimentions)
-        elif is_wall(snake[-1], dimentions) or is_snake(snake[-1], snake[:-1]):
-            clear_screen()
-            print("Game over!")
-            sys.exit(0)
+        elif is_wall(snake.head, dimentions):
+            end_game()
