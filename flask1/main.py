@@ -102,3 +102,5 @@ def get_category(id):
 def delete_category(id):
     Category.find(id).delete()
     return redirect("/")
+
+
