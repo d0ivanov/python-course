@@ -8,5 +8,13 @@
   <label>Content</label>
   <input name="content"/>
   </br>
+  <label>Category</label>
+  <select name="category_id">
+    <option value="0">No category</option>
+    {% for category in categories %}
+      <option value="{{ category.id }}">{{ category.name }}</option>
+    {% endfor %}
+  </select>
+  </br>
   <button type="submit">Submit</button>
 </form>

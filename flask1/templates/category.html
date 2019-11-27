@@ -1,0 +1,10 @@
+<title>Categories - {{ category.name }}</title>
+
+<a href="/categories/{{ category.id }}/delete">Delete</a>
+
+<h1>{{ category.name }}</h1>
+{% for post in category.posts() %}
+<a href="/posts/{{ post.id }}"><b>Name:</b> {{ post.name }} | Author: {{ post.author }}</a>
+<br/>
+{% endfor %}
+
