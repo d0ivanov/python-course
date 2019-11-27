@@ -4,7 +4,24 @@ DB_NAME = 'example.db'
 
 conn = sqlite3.connect(DB_NAME)
 
-conn.cursor().execute('CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, author TEXT, content TEXT)')
+conn.cursor().execute('''
+CREATE TABLE IF NOT EXISTS categories
+    (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+    )
+''')
+conn.cursor().execute('''
+CREATE TABLE IF NOT EXISTS posts
+    (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        author TEXT,
+        content TEXT,
+        category_id INTEGER,
+        FOREIGN KEY(category_id) REFERENCES categories(id)
+    )
+''')
 conn.cursor().execute('''
 CREATE TABLE IF NOT EXISTS comments
     (
@@ -16,6 +33,7 @@ CREATE TABLE IF NOT EXISTS comments
 ''')
 conn.commit()
 
+
 class DB:
     def __enter__(self):
         self.conn = sqlite3.connect(DB_NAME)
@@ -23,5 +41,3 @@ class DB:
 
     def __exit__(self, type, value, traceback):
         self.conn.commit()
-
-
