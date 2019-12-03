@@ -51,3 +51,45 @@ def get_post(post_id):
     if post_id in POSTS:
         return json.dumps(POSTS[post_id].to_dict())
     return "", 404
+
+
+@app.route("/api/posts/<post_id>", methods = ["DELETE"])
+def delete_post(post_id):
+    if post_id in POSTS:
+        del POSTS[post_id]
+        return ""
+    return "", 404
+
+
+@app.route("/api/posts/<post_id>", methods = ["PATCH"])
+def update_post(post_id):
+    post_data = request.get_json(force=True, silent=True)
+    if post_data == None:
+        return "Bad request", 400
+    if post_id in POSTS:
+        post = POSTS[post_id]
+        if "title" in post_data:
+            post.title = post_data["title"]
+        if "content" in post_data:
+            post.content = post_data["content"]
+        return json.dumps(post.to_dict())
+    return "", 404
+
+
+@app.route("/", methods = ["GET"])
+def posts():
+    return render_template("index.html")
+
+
+@app.route("/posts/<post_id>", methods = ["GET"])
+def view_post(post_id):
+    if post_id in POSTS:
+        return render_template("post.html", post=POSTS[post_id])
+    return "", 404
+
+
+
+
+
+
+
