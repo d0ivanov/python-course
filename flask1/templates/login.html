@@ -1,0 +1,28 @@
+<script>
+function login()
+{
+    var username = document.getElementById('username').value;
+    var password = document.getElementById('password').value;
+    var request = new XMLHttpRequest();
+    request.open("POST", '/login', true);
+    request.onload = function(e) {
+      token = JSON.parse(request.responseText).token;
+      document.cookie = "token=" + token + ";";
+      document.location = '/';
+    }
+    request.send(JSON.stringify(
+      {
+        username: username,
+        password: password
+      }
+    ));
+}
+</script>
+
+<form id='login'>
+  <label>Username:</label>
+  <input type="text" id="username"><br/>
+  <label>Password:</label>
+  <input type="password" id="password"></br><br/>
+  <button type="button" onclick="login()">Submit</button>
+</form>
