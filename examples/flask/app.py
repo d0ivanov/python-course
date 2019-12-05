@@ -5,22 +5,14 @@ from flask import Flask
 from flask import request
 from flask import render_template
 
+from model.post import Post
+
+
 app = Flask(__name__)
 
 
 def get_id():
-    return str(uuid.uuid1())
-
-
-class Post(object):
-
-    def __init__(self, post_id, title, content):
-        self.id = post_id
-        self.title = title
-        self.content = content
-
-    def to_dict(self):
-        return self.__dict__
+    return str(uuid.uuid4())
 
 
 # id -> Post(...)
@@ -32,9 +24,8 @@ def create_post():
     post_data = request.get_json(force=True, silent=True)
     if post_data == None:
         return "Bad request", 400
-    post_id = get_id()
-    post = Post(post_id, post_data["title"], post_data["content"])
-    POSTS[post_id] = post
+    post = Post(get_id(), post_data["title"], post_data["content"])
+    POSTS[post.id] = post
     return json.dumps(post.to_dict()), 201
 
 
