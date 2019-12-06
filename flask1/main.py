@@ -1,6 +1,8 @@
+from functools import wraps
+
 from flask import Flask
-from flask import render_template, request, redirect, url_for
-from flask_httpauth import HTTPBasicAuth
+from flask import render_template, request, redirect, url_for, jsonify
+import json
 
 from post import Post
 from comment import Comment
@@ -9,8 +11,15 @@ from user import User
 
 app = Flask(__name__)
 
+def require_login(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        token = request.cookies.get('token')
+        if not token or not User.verify_token(token):
+            return redirect('/login')
+        return func(*args, **kwargs)
+    return wrapper
 
-auth = HTTPBasicAuth()
 
 @app.route('/')
 def hello_world():
@@ -48,7 +57,7 @@ def edit_post(id):
 
 
 @app.route('/posts/new', methods=['GET', 'POST'])
-@auth.login_required
+@require_login
 def new_post():
     if request.method == 'GET':
         return render_template('new_post.html', categories=Category.all())
@@ -125,13 +134,19 @@ def register():
         return redirect('/')
 
 
-@auth.verify_password
-def verify_password(username, password):
-    user = User.find_by_username(username)
-    if user:
-        return user.verify_password(password)
-
-    return False
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
+        data = json.loads(request.data.decode('ascii'))
+        username = data['username']
+        password = data['password']
+        user = User.find_by_username(username)
+        if not user or not user.verify_password(password):
+            return jsonify({'token': None})
+        token = user.generate_token()
+        return jsonify({'token': token.decode('ascii')})
 
 
 if __name__ == '__main__':
