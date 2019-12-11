@@ -8,7 +8,7 @@ conn = sqlite.connect(DB_NAME)
 conn.cursor().execute('''
 CREATE TABLE IF NOT EXISTS post
     (
-        id STRING PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT
     )
