@@ -1,48 +1,48 @@
 import unittest
+import solution
 
 from solution import TicTacToeBoard
-from solution import InvalidMove, InvalidValue, InvalidKey, NotYourTurn
 
 class SolutionTest(unittest.TestCase):
 
     def test_move_when_cell_number_before_letter_raises(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["1B"] = "X"
 
     def test_move_when_cell_is_just_a_letter(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["B"] = "X"
 
     def test_move_when_cell_is_just_a_number(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["1"] = "X"
 
     def test_move_when_cell_is_invalid_letter(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["Z"] = "X"
 
     def test_move_when_cell_is_invalid_number(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["9"] = "X"
 
     def test_move_when_cell_has_invalid_letter(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["D1"] = "X"
 
     def test_move_when_cell_has_invalid_number(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidKey):
+        with self.assertRaises(solution.InvalidKey):
             board["B8"] = "X"
 
     def test_move_when_invalid_value(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidValue):
+        with self.assertRaises(solution.InvalidValue):
             board["B3"] = "d"
 
     def test_can_move_when_cell_valid(self):
@@ -54,13 +54,13 @@ class SolutionTest(unittest.TestCase):
 
     def test_move_twice_on_same_cell(self):
         board = TicTacToeBoard()
-        with self.assertRaises(InvalidMove):
+        with self.assertRaises(solution.InvalidMove):
             board["A1"] = 'X'
             board["A1"] = 'O'
 
     def test_move_twice_with_same_value(self):
         board = TicTacToeBoard()
-        with self.assertRaises(NotYourTurn):
+        with self.assertRaises(solution.NotYourTurn):
             board["A1"] = 'X'
             board["B1"] = 'X'
 
@@ -80,7 +80,7 @@ class SolutionTest(unittest.TestCase):
   -------------
     A   B   C
 """
-        self.assertEqual(empty_board, str(board))
+        self.assertEqual(empty_board.strip(), str(board).strip())
 
     def test_print_full_board(self):
         board = TicTacToeBoard()
@@ -103,7 +103,7 @@ class SolutionTest(unittest.TestCase):
         board["C2"] = "X"
         board["A1"] = "O"
         board["B1"] = "X"
-        self.assertEqual(board_str, str(board))
+        self.assertEqual(board_str.strip(), str(board).strip())
 
     def test_x_wins(self):
         board = TicTacToeBoard()
