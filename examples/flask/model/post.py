@@ -1,5 +1,5 @@
 from database import SQLite
-from errors import NoValuePresentError
+from errors import ApplicationError
 
 
 class Post(object):
