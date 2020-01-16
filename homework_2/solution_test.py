@@ -98,11 +98,11 @@ class SolutionTest(unittest.TestCase):
         board["A2"] = "O"
         board["B3"] = "X"
         board["B2"] = "O"
-        board["C3"] = "X"
+        board["B1"] = "X"
         board["C1"] = "O"
         board["C2"] = "X"
         board["A1"] = "O"
-        board["B1"] = "X"
+        board["C3"] = "X"
         self.assertEqual(board_str.strip(), str(board).strip())
 
     def test_x_wins(self):
