@@ -21,7 +21,7 @@ class SolutionTest(unittest.TestCase):
         res = solution.top(logs, 'status', 2)
         self.assertEqual({'success': 2, 'error': 1}, res)
 
-    def test_top(self):
+    def test_complex_filter(self):
         logs = [
             {"timestamp": "2020-05-11T13:42:50", "status": "error", "countryISO2": "BG"},
             {"timestamp": "2020-05-11T13:43:20", "status": "success", "countryISO2": "UK"},
