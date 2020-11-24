@@ -2,6 +2,7 @@ from flask import Flask
 from flask import render_template, request, flash, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
+from functools import wraps
 from itsdangerous import (
         TimedJSONWebSignatureSerializer as Serializer,
         BadSignature,
@@ -19,6 +20,36 @@ db = SQLAlchemy(app)
 
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def verify_token(token):
+    s = Serializer(app.secret_key)
+    try:
+        s.loads(token)
+    except SignatureExpired:
+        return False
+    except BadSignature:
+        return False
+    return True
+
+def require_login(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        token = request.cookies.get('token')
+        if not token or not verify_token(token):
+            flash('You have to be logged in to access this page')
+            return redirect('/login')
+        return func(*args, **kwargs)
+    return wrapper
+
+def stop_logged_users(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        token = request.cookies.get('token')
+        if token and verify_token(token):
+            flash('You\'re already logged in.')
+            return redirect('/')
+        return func(*args, **kwargs)
+    return wrapper
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -40,12 +71,28 @@ class User(db.Model):
         s = Serializer(app.secret_key, expires_in=600)
         return s.dumps({'username': self.username})
 
+    @staticmethod
+    def find_by_token(token):
+        if not token:
+            return None
+
+        try:
+            s = Serializer(app.secret_key)
+            payload = s.loads(token)
+            return User.query.filter_by(username=payload.get('username')).first()
+        except SignatureExpired:
+            return None
+
 
 @app.route('/')
+@require_login
 def index():
-    return render_template('index.html')
+    token = request.cookies.get('token')
+    user = User.find_by_token(token)
+    return render_template('index.html', user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
+@stop_logged_users
 def register():
     if request.method == 'GET':
         return render_template('register.html')
@@ -63,6 +110,7 @@ def register():
             return redirect(request.url)
 
 @app.route('/login', methods=['GET', 'POST'])
+@stop_logged_users
 def login():
     if request.method == 'GET':
         return render_template('login.html')

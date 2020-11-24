@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+
+{% block js %}
 <script>
   function login() {
     console.log('test');
@@ -24,7 +27,9 @@
     ));
   }
 </script>
+{% endblock %}
 
+{% block content %}
 <form>
   <label name="username">Username:</label>
   <input type="text" name="username" id="username"/><br/>
@@ -33,3 +38,4 @@
   <br/><br/>
   <button type="button" onclick="login()">Login</button>
 </form>
+{% endblock %}
