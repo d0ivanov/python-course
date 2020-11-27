@@ -1,0 +1,35 @@
+<script>
+  function login() {
+    var username = document.getElementById('username').value;
+    var password = document.getElementById('password').value;
+
+    var request = new XMLHttpRequest();
+    request.open("POST", "/login", true);
+    request.onload = function() {
+      var token = JSON.parse(request.responseText).token;
+      if (token != null) {
+        document.cookie = 'token=' + token + ';';
+        document.location = '/';
+      } else {
+        alert('Could not login');
+      }
+    };
+
+    request.send(JSON.stringify(
+      {
+        username: username,
+        password: password
+      }
+    ));
+  }
+</script>
+
+<form>
+  <label name="username">Username:</label>
+  <input id="username" type="text" name="username"/><br/>
+  <label name="password">Password:</label>
+  <input id="password" type="password" name="password"/><br/>
+
+  <br/><br/>
+  <button type="button" onclick="login()">Login</button>
+</form>
