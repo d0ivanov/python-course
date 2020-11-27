@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template, request, flash, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 
 from functools import wraps
 from itsdangerous import (
@@ -51,10 +52,21 @@ def stop_logged_users(func):
         return func(*args, **kwargs)
     return wrapper
 
+likes_table = db.Table('like', db.Model.metadata,
+        db.Column('liking_user_id', db.Integer, db.ForeignKey('user.id'), index=True),
+        db.Column('liked_user_id', db.Integer, db.ForeignKey('user.id')))
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    likes = db.relationship(
+            'User',
+            secondary=likes_table,
+            primaryjoin=id==likes_table.c.liking_user_id,
+            secondaryjoin=id==likes_table.c.liked_user_id,
+            backref='liked_by'
+            )
 
     def __init__(self, **kwargs):
         if 'password' in kwargs:
@@ -88,8 +100,33 @@ class User(db.Model):
 @require_login
 def index():
     token = request.cookies.get('token')
-    user = User.find_by_token(token)
-    return render_template('index.html', user=user)
+    current_user = User.find_by_token(token)
+    random_user = User.query.filter(User.id != current_user.id).order_by(func.random()).first()
+    i = 0
+    users_count = User.query.count()
+    while random_user in current_user.likes:
+        i += 1
+        if i >= users_count:
+            random_user = None
+            break
+        random_user = User.query.filter(User.id != current_user.id).order_by(func.random()).first()
+    print(current_user.likes)
+    print(current_user.liked_by)
+
+    matches = set(current_user.likes) & set(current_user.liked_by)
+
+    return render_template('index.html', current_user=current_user, random_user=random_user, matches=matches)
+
+@app.route('/like/<id>')
+@require_login
+def like(id):
+    token = request.cookies.get('token')
+    current_user = User.find_by_token(token)
+    liked_user = User.query.filter_by(id=id).first()
+    current_user.likes.append(liked_user)
+    db.session.commit()
+    flash('<3 {} <3'.format(liked_user.username))
+    return redirect('/')
 
 @app.route('/register', methods=['GET', 'POST'])
 @stop_logged_users

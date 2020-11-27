@@ -1,5 +1,47 @@
 {% extends 'base.html' %}
 
 {% block content %}
-Hello world from template
+
+
+<div style="max-width: 600px; margin: 0 auto">
+  <center>
+
+    {% if random_user %}
+      {{ random_user.username }}
+      <br/>
+      <br/>
+      <br/>
+
+      <div style="width: 200px">
+        <div style="width: 100px; float: left">
+          <a href="/">Nope</a>
+        </div>
+        <div style="width: 100px; float: right">
+          <a href="/like/{{ random_user.id }}">Me gusta!</a>
+        </div>
+      </div>
+
+    {% else %}
+      There's no one else around you...
+    {% endif %}
+
+    <br/>
+    <br/>
+    <br/>
+    <hr/>
+    <h4>Matches:</h4>
+    <br/>
+    {% for match in matches %}
+      <div class="card" style="width: 30%; float: left; margin: 1%">
+        <img src="..." class="card-img-top" alt="TODO">
+        <div class="card-body">
+          <h5 class="card-title">{{ match.username }}</h5>
+          <p class="card-text">TODO: description</p>
+        </div>
+      </div>
+
+    {% endfor %}
+  </center>
+
+</div>
 {% endblock %}
