@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import render_template, request, flash, redirect, jsonify
+from flask import send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 
@@ -9,13 +10,22 @@ from itsdangerous import (
         BadSignature,
         SignatureExpired
         )
+from datetime import datetime
 
 import hashlib
 import json
+import random
+import string
+import os
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/dev.db'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = "eusehuccuhosn23981pcgid1xth4dn"
+
 
 db = SQLAlchemy(app)
 
@@ -52,6 +62,13 @@ def stop_logged_users(func):
         return func(*args, **kwargs)
     return wrapper
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def random_string(length):
+    return ''.join(random.choice(string.ascii_letters) for x in range(length))
+
 likes_table = db.Table('like', db.Model.metadata,
         db.Column('liking_user_id', db.Integer, db.ForeignKey('user.id'), index=True),
         db.Column('liked_user_id', db.Integer, db.ForeignKey('user.id')))
@@ -66,6 +83,16 @@ class User(db.Model):
             primaryjoin=id==likes_table.c.liking_user_id,
             secondaryjoin=id==likes_table.c.liked_user_id,
             backref='liked_by'
+            )
+    description = db.Column(db.String(500), nullable=True)
+    picture = db.Column(db.String(48), nullable=True)
+    sent_messages = db.relationship('Message',
+            foreign_keys='Message.sender_id',
+            backref='sender'
+            )
+    received_messages = db.relationship('Message',
+            foreign_keys='Message.receiver_id',
+            backref='receiver'
             )
 
     def __init__(self, **kwargs):
@@ -95,6 +122,12 @@ class User(db.Model):
         except SignatureExpired:
             return None
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    receiver_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    content = db.Column(db.String, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 @app.route('/')
 @require_login
@@ -136,9 +169,20 @@ def register():
     else:
         username = request.form['username']
         password = request.form['password']
+        description = request.form['description']
+        file = request.files['profile_picture']
+
+        if file and file.filename != '' and allowed_file(file.filename):
+            file.filename = random_string(48)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
 
         try:
-            user = User(username=username, password=password)
+            user = User(
+                    username=username,
+                    password=password,
+                    description=description,
+                    picture=file.filename
+                    )
             db.session.add(user)
             db.session.commit()
             return redirect('/')
@@ -161,3 +205,45 @@ def login():
             return jsonify({'token': None})
         token = user.generate_token()
         return jsonify({'token': token.decode('ascii')})
+
+@app.route('/uploads/<filename>')
+@require_login
+def get_uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/chat/<correspondent_id>')
+@require_login
+def chat(correspondent_id):
+    token = request.cookies.get('token')
+    current_user = User.find_by_token(token)
+    correspondent = User.query.filter_by(id=correspondent_id).first()
+
+    outbound = Message.query.filter_by(sender_id=current_user.id, receiver_id=correspondent.id)
+    inbound = Message.query.filter_by(sender_id=correspondent.id, receiver_id=current_user.id)
+
+    messages = sorted(list(outbound) + list(inbound), key=lambda x: x.timestamp)
+
+    return render_template('chat.html',
+            current_user=current_user,
+            correspondent=correspondent,
+            messages=messages)
+
+@app.route('/message/<receiver_id>', methods=['POST'])
+@require_login
+def send_message(receiver_id):
+    token = request.cookies.get('token')
+    sender = User.find_by_token(token)
+    receiver = User.query.filter_by(id=receiver_id).first()
+
+    content = request.form['message']
+
+    # TODO: check if the sender can send messages to the receiver
+
+    msg = Message(sender=sender, receiver=receiver, content=content)
+    db.session.add(msg)
+    db.session.commit()
+    return redirect('/chat/' + str(receiver_id
+        ))
+
+if __name__ == '__main__':
+    app.run(debug=True)
