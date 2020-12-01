@@ -1,0 +1,20 @@
+<div>
+    {% if user.first_name is None %}
+        <p>Welcome Back, {{ user.username }}</p>
+    {% else %}
+        <p>Welcome Back, {{ user.first_name }}</p>
+    {% endif %}
+
+    <form method="POST", action="/profile">
+        <input type="text" name="first_name", value="{{user.first_name}}" />
+        <br />
+        <input type="text" name="last_name", value="{{user.last_name}}" />
+        <br />
+        <input type="number" name="age", value="{{user.age}}" />
+        <br />
+        <input type="file" name="profile_pic"  accept=".jpeg,.jpg,image/jpeg,image/jpg" />
+        <br />
+        <input type="submit" value="Update profile"/>
+    </form>
+
+</div>
