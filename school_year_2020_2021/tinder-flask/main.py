@@ -3,6 +3,8 @@ from flask import render_template, request, flash, redirect, jsonify
 from flask import send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
+from flask_socketio import SocketIO
+from flask_socketio import join_room, emit
 
 from functools import wraps
 from itsdangerous import (
@@ -25,6 +27,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/dev.db'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = "eusehuccuhosn23981pcgid1xth4dn"
+
+socketio = SocketIO(app)
 
 
 db = SQLAlchemy(app)
@@ -245,5 +249,42 @@ def send_message(receiver_id):
     return redirect('/chat/' + str(receiver_id
         ))
 
+def get_room(sender, receiver):
+    return '_'.join(sorted([str(sender), str(receiver)]))
+
+@socketio.on('join')
+def join(message):
+    sender_id = message['sender']
+    receiver_id = message['receiver']
+    token = request.cookies.get('token')
+    sender = User.find_by_token(token)
+    receiver = User.query.filter_by(id=receiver_id).first()
+    if receiver not in sender.likes or sender not in receiver.likes:
+        return "You can't get into this chat room", 403
+    room = get_room(sender_id, receiver_id)
+    join_room(room)
+
+@socketio.on('send_message')
+def send_message(message):
+    sender_id = message['sender']
+    receiver_id = message['receiver']
+    room = get_room(sender_id, receiver_id)
+
+    token = request.cookies.get('token')
+    sender = User.find_by_token(token)
+    receiver = User.query.filter_by(id=receiver_id).first()
+
+    if receiver not in sender.likes or sender not in receiver.likes:
+        return "You can't send a message to this user.", 403
+
+    content = message['msg']
+
+    msg = Message(sender=sender, receiver=receiver, content=content)
+    db.session.add(msg)
+    db.session.commit()
+
+    emit('message', {'msg': str(sender.username) + ': ' + content}, room=room)
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
