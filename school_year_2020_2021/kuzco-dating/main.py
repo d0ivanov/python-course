@@ -1,61 +1,35 @@
-from flask import Flask
-from flask import render_template, request, redirect, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
-from itsdangerous import TimedJSONWebSignatureSerializer
-from itsdangerous import SignatureExpired, BadSignature
-from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+import os
 
-import json
+from flask import Flask
+from flask import render_template, request, redirect, make_response
+from flask_login import login_user, login_required, current_user
+from werkzeug.middleware.shared_data import SharedDataMiddleware
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+from database import db_session, init_db
+from login import login_manager
+from models import User
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 # NEVER KEEP SECRET KEYS INSIDE YOUR PUBLIC CODE
 app.secret_key = "ssucuuh398nuwetubr33rcuhne"
-db = SQLAlchemy(app)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB
+app.config['UPLOAD_FOLDER'] = '/tmp/flask/uploads'
 
+login_manager.init_app(app)
+init_db()
 
-def generate_token(user, secret, expires_in=600):
-    s = TimedJSONWebSignatureSerializer(secret, expires_in)
-    return s.dumps({'username': user.username})
+app.add_url_rule('/uploads/<filename>', 'uploaded_file', build_only=True)
+app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
+    '/uploads':  app.config['UPLOAD_FOLDER']
+})
 
-
-def verify_token(token):
-    s = TimedJSONWebSignatureSerializer(app.secret_key)
-    try:
-        s.loads(token)
-    except SignatureExpired:
-        print("here 1")
-        return False
-    except BadSignature:
-        print("here 2")
-        return False
-    return True
-
-
-def current_user(token):
-    s = TimedJSONWebSignatureSerializer(app.secret_key)
-    print(s.loads(token))
-    parsed_token = s.loads(token)
-    username = parsed_token['username']
-    return User.query.filter_by(username=username).first()
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    first_name = db.Column(db.String(120), unique=False, nullable=True) 
-    last_name = db.Column(db.String(120), unique=False, nullable=True) 
-    age = db.Column(db.Integer(), unique=False, nullable=True) 
-
-    def __init__(self, **kwargs):
-        if 'password' in kwargs:
-            kwargs['password'] = generate_password_hash(kwargs['password'])
-        super(User, self).__init__(**kwargs)
-
-    def __repr__(self):
-        return '<User %r>' % self.username
+@app.teardown_appcontext
+def shutdown_context(exception=None):
+    db_session.remove()
 
 
 @app.route('/')
@@ -69,12 +43,12 @@ def register():
         return render_template('register.html')
     else:
         username = request.form['username']
-        password = request.form['password']
+        password = generate_password_hash(request.form['password'])
 
         user = User(username=username, password=password)
-        db.session.add(user)
-        db.session.commit()
-        return redirect('/')
+        db_session.add(user)
+        db_session.commit()
+        return redirect('/login')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -83,35 +57,41 @@ def login():
     if request.method == 'GET':
         response = make_response(render_template('login.html'))
     else:
-        response = make_response(redirect('/'))
+        response = make_response(redirect('/profile'))
 
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
-            token = generate_token(user, app.secret_key, expires_in=99999)
-            response.set_cookie('token', token)
+            user.login_id = str(uuid.uuid4())
+            db_session.commit()
+            login_user(user)
     return response
 
 
-@app.route('/profile', methods=['GET', 'POST'])
-def profile():
-    auth_token = request.cookies['token']
-    if auth_token is not None and not verify_token(auth_token):
-        return redirect('/login')
-    user = current_user(auth_token)
+@app.route("/logout")
+@login_required
+def logout():
+    current_user.login_id = None
+    db_session.commit()
+    logout_user()
+    return redirect('/')
 
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
     if request.method == 'GET':
-        return render_template("profile.html", user=user)
+        return render_template("profile.html", user=current_user)
     elif request.method == 'POST':
-        first_name = request.form['first_name']
-        if first_name != user.first_name:
-            user.first_name = first_name
-        last_name = request.form['last_name']
-        if last_name != user.last_name:
-            user.last_name = last_name
-        age = request.form['age']
-        if age != user.age:
-            user.age = age
-        db.session.commit()
+        current_user.first_name = request.form['first_name']
+        current_user.last_name = request.form['last_name']
+        current_user.age = request.form['age']
+        if 'profile_pic' in request.files:
+            upload = request.files['profile_pic']
+            if upload:
+                filename = secure_filename(upload.filename)
+                upload.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                current_user.profile_pic = '/uploads/{}'.format(filename)
+        db_session.commit()
         return redirect('/profile')
 
 
