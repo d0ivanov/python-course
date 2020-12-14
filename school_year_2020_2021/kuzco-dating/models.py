@@ -1,5 +1,25 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship, aliased
+from sqlalchemy.sql.expression import func
+    
 from database import Base
+
+class UserLike(Base):
+    __tablename__ = 'likes'
+    id = Column(Integer, primary_key=True)
+    liked_by = Column(Integer, ForeignKey("users.id"), index=True)
+    liked_user = Column(Integer, ForeignKey("users.id"))
+
+    @staticmethod
+    def find_matches(current_user):
+        i_like = UserLike.query.filter(UserLike.liked_by == current_user.id).all()
+        im_liked = UserLike.query.filter(UserLike.liked_user == current_user.id).all()
+        print(i_like)
+        print(im_liked)
+        return []
+
+    def __repr__(self):
+        return '<UserLike ({}, {}, {})>'.format(self.id, self.liked_by, self.liked_user)
 
 
 class User(Base):
@@ -11,7 +31,10 @@ class User(Base):
     first_name = Column(String(120), unique=False, nullable=True) 
     last_name = Column(String(120), unique=False, nullable=True) 
     age = Column(Integer(), unique=False, nullable=True) 
+    bio = Column(String(512), unique=False, nullable=True)
     profile_pic = Column(String(120), unique=False, nullable=True)
+
+    likes = relationship("UserLike", foreign_keys=[UserLike.liked_by])
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -28,9 +51,14 @@ class User(Base):
     def is_anonymous(self):
         return False
 
+    @staticmethod
+    def find_another_random(user):
+        liked_user_ids = [like.liked_user for like in user.likes]
+        return User.query.filter(User.id != user.id,
+                User.id.notin_(liked_user_ids)).first()
+
     def get_id(self):
         return self.login_id
 
     def __repr__(self):
         return '<User %r>' % self.username
-

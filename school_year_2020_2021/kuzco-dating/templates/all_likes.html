@@ -1,0 +1,5 @@
+<ul>
+    {% for liked_user in likes %}
+        <li> <img src="{{ liked_user.profile_pic }}" /> {{ liked_user.username }}</li>
+    {% endfor %}
+</ul>

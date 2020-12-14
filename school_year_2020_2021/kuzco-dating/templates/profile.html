@@ -1,18 +1,12 @@
 <div>
-    {% if user.first_name is none %}
-        <p>Welcome Back, {{ user.username }}</p>
-    {% else %}
-        <p>Welcome Back, {{ user.first_name }}</p>
-    {% endif %}
-    
-    <img src="{{user.profile_pic}}">
-
     <form method="POST", action="/profile" enctype="multipart/form-data">
-        <input type="text" name="first_name", value="{{user.first_name}}" />
+        <input type="text" name="first_name", value="{{current_user.first_name}}" />
         <br />
-        <input type="text" name="last_name", value="{{user.last_name}}" />
+        <input type="text" name="last_name", value="{{current_user.last_name}}" />
         <br />
-        <input type="number" name="age", value="{{user.age}}" />
+        <input type="number" name="age", value="{{current_user.age}}" />
+        <br />
+        <input type="text" name="bio", value="{{current_user.bio}}" />
         <br />
         <input type="file" name="profile_pic" accept=".jpeg,.jpg,.png,image/jpeg,image/jpg,image/png" />
         <br />

@@ -1,0 +1,18 @@
+{% extends "index.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block content  %}
+    {% if suggestion is none %}
+        <h1>Sorry, no more hot singles in your area...</h1>
+    {% else %}
+        <img src="{{suggestion.profile_pic}}" /> <br />
+        <form method="POST" action="/match">
+            <input type="hidden" name="liked_user_id" value="{{ suggestion.id }}" />
+            <input type="submit" value="Like" />
+        </form>
+        <a href="/">Dislike</a>
+
+    {% endif %}
+
+ {% endblock  %}

@@ -3,14 +3,15 @@ import os
 
 from flask import Flask
 from flask import render_template, request, redirect, make_response
-from flask_login import login_user, login_required, current_user
+from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from database import db_session, init_db
 from login import login_manager
-from models import User
+from models import User, UserLike
+from utils import validate_file_type
 
 
 app = Flask(__name__)
@@ -27,14 +28,39 @@ app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
     '/uploads':  app.config['UPLOAD_FOLDER']
 })
 
+
 @app.teardown_appcontext
 def shutdown_context(exception=None):
     db_session.remove()
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/', methods=['GET'])
+@login_required
+def homepage():
+    suggestion = User.find_another_random(current_user)
+    return render_template("match.html", suggestion=suggestion)
+
+
+@app.route('/match', methods=['POST'])
+@login_required
+def match_with_others():
+    if request.form["liked_user_id"] is not None:
+        liked_user = int(request.form["liked_user_id"])
+        user_like = UserLike(liked_by=current_user.id, liked_user=liked_user)
+        current_user.likes.append(user_like)
+        db_session.commit()
+    return redirect("/")
+
+
+@app.route('/matches', methods=['GET'])
+@login_required
+def get_matches():
+    #likes = User.query.filter(User.id == current_user.id). \
+    #        join(UserLike, UserLike.liked_by == User.id, isouter=True).all()
+    likes = UserLike.find_matches(current_user)
+    for like in likes:
+        print(like)
+    return render_template("all_likes.html", likes=likes)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -80,15 +106,16 @@ def logout():
 @login_required
 def profile():
     if request.method == 'GET':
-        return render_template("profile.html", user=current_user)
+        return render_template("profile.html")
     elif request.method == 'POST':
         current_user.first_name = request.form['first_name']
         current_user.last_name = request.form['last_name']
         current_user.age = request.form['age']
-        if 'profile_pic' in request.files:
+        current_user.bio = request.form['bio']
+        if 'profile_pic' in request.files and request.files['profile_pic']:
             upload = request.files['profile_pic']
-            if upload:
-                filename = secure_filename(upload.filename)
+            filename = secure_filename(upload.filename)
+            if validate_file_type(filename, ["jpeg", "jpg", "png"]):
                 upload.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 current_user.profile_pic = '/uploads/{}'.format(filename)
         db_session.commit()
