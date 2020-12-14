@@ -12,11 +12,17 @@ class UserLike(Base):
 
     @staticmethod
     def find_matches(current_user):
-        i_like = UserLike.query.filter(UserLike.liked_by == current_user.id).all()
-        im_liked = UserLike.query.filter(UserLike.liked_user == current_user.id).all()
-        print(i_like)
-        print(im_liked)
-        return []
+        aliased_likes = aliased(UserLike)
+        matches = UserLike.query.filter(UserLike.liked_by == current_user.id). \
+                join(aliased_likes,
+                        UserLike.liked_user == aliased_likes.liked_by).all()
+        return [UserLike.find_users(match) for match in matches]
+
+    @staticmethod
+    def find_users(match):
+        liked_by = User.query.filter_by(id=match.liked_by).first()
+        liked = User.query.filter_by(id=match.liked_user).first()
+        return (liked_by, liked)
 
     def __repr__(self):
         return '<UserLike ({}, {}, {})>'.format(self.id, self.liked_by, self.liked_user)

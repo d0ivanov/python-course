@@ -55,11 +55,7 @@ def match_with_others():
 @app.route('/matches', methods=['GET'])
 @login_required
 def get_matches():
-    #likes = User.query.filter(User.id == current_user.id). \
-    #        join(UserLike, UserLike.liked_by == User.id, isouter=True).all()
     likes = UserLike.find_matches(current_user)
-    for like in likes:
-        print(like)
     return render_template("all_likes.html", likes=likes)
 
 
