@@ -1,6 +1,6 @@
 from time import sleep
 
-def simulation(grid):
+def next_generation(grid):
     # Your implementation goes here
     # Please don't upload the whole content of the file,
     # but only this function (along with any additional
@@ -15,14 +15,14 @@ def print_grid(grid):
         print('')
 
 
-def animate(simulation):
-    simulacra = next(simulation)
+def animate(grid):
+    generation = grid
     while True:
         print('')
         print('')
-        print_grid(simulacra)
+        print_grid(generation)
         sleep(1)
-        simulacra = next(simulation)
+        generation = next_generation(generation)
 
 
 g = [[0 for i in range(15)] for k in range(15)]
@@ -32,4 +32,4 @@ g[2][3] = 1
 g[1][3] = 1
 g[0][2] = 1
 
-animate(simulation(g))
+animate(g)
