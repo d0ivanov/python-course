@@ -62,7 +62,7 @@ def match():
 @login_required
 def get_matches():
     likes = [like[1] for like in UserLike.find_matches(current_user)]
-    return render_template("all_likes.html", likes=likes)
+    return render_template("all_likes.html", likes=split_in_groups(likes))
 
 
 @app.route('/register', methods=['GET', 'POST'])

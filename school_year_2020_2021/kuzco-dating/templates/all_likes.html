@@ -1,7 +1,19 @@
 {% extends "index.html"  %}
 
-<ul>
-    {% for liked_user in likes %}
-        <li> <img src="{{ liked_user.profile_pic }}" /> {{ liked_user.username }}</li>
+{% block content %}
+    {% for row in likes %}
+        <div class="row justify-content-center">
+            {% for user in row %}
+                <div class="col-sm-2">
+                    <div class="card" style="width: 18rem;">
+                      <h5 class="card-header">{{ user.first_name }} {{ user.last_name }}</h5>
+                      <img class="card-img-top rounded" style="height: 10vw; object-fit: cover;" src="{{ user.profile_pic }}" alt="Card image cap">
+                      <div class="card-body">
+                          <p class="card-text">{{ user.bio }}</p>
+                      </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% endfor %}
-</ul>
+{% endblock %}

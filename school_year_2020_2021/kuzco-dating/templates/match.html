@@ -4,27 +4,27 @@
 
 {% block content  %}
     {% if suggestion is none %}
-        <h1>Sorry, no more hot singles in your area...</h1>
+        <div class="row justify-content-center">
+            <div class="cold-md-3">
+                <h1>Sorry, no more hot singles in your area...</h1>
+            </div>
+        </div>
     {% else %}
-        <div class="row">
-            <div class="cold-md-12">
+        <div class="row justify-content-center">
+            <div class="cold-md-3">
                 <div class="card" style="width: 18rem;">
-                  <img class="card-img-top" src="..." alt="Card image cap">
+                  <img class="card-img-top" src="{{ suggestion.profile_pic }}" alt="Card image cap">
                   <div class="card-body">
-                      <h5 class="card-title">{{   }}</h5>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                      <h5 class="card-title">{{ suggestion.first_name }} {{ suggestion.last_name }}</h5>
+                      <p class="card-text">{{ suggestion.bio }}</p>
+                      <form method="POST" action="/match">
+                          <input type="hidden" name="liked_user_id" value="{{ suggestion.id }}" />
+                          <input type="submit" class="btn btn-success" value="Like" />
+                          <a href="{{ url_for('find_match') }}" class="btn btn-danger">Dislike</a>
+                      </form>
                   </div>
                 </div>
             </div>
         </div>
-        <img src="{{suggestion.profile_pic}}" /> <br />
-        <form method="POST" action="/match">
-            <input type="hidden" name="liked_user_id" value="{{ suggestion.id }}" />
-            <input type="submit" value="Like" />
-        </form>
-        <a href="/">Dislike</a>
-
     {% endif %}
-
- {% endblock  %}
+{% endblock  %}
