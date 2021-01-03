@@ -2,7 +2,7 @@ import uuid
 import os
 
 from flask import Flask
-from flask import render_template, request, redirect, make_response
+from flask import render_template, request, redirect, make_response, url_for
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from database import db_session, init_db
 from login import login_manager
 from models import User, UserLike
-from utils import validate_file_type
+from utils import validate_file_type, split_in_groups
 
 
 app = Flask(__name__)
@@ -34,33 +34,34 @@ def shutdown_context(exception=None):
     db_session.remove()
 
 
-@login_manager.unauthorized_handler
-def unauthorized():
-    return redirect("/register")
-
-
 @app.route('/', methods=['GET'])
 @login_required
 def homepage():
+    return redirect(url_for('find_match'))
+
+
+@app.route('/match', methods=['GET'])
+@login_required
+def find_match():
     suggestion = User.find_another_random(current_user)
     return render_template("match.html", suggestion=suggestion)
 
 
 @app.route('/match', methods=['POST'])
 @login_required
-def match_with_others():
+def match():
     if request.form["liked_user_id"] is not None:
         liked_user = int(request.form["liked_user_id"])
         user_like = UserLike(liked_by=current_user.id, liked_user=liked_user)
         current_user.likes.append(user_like)
         db_session.commit()
-    return redirect("/")
+    return redirect(url_for('find_match'))
 
 
 @app.route('/matches', methods=['GET'])
 @login_required
 def get_matches():
-    likes = UserLike.find_matches(current_user)
+    likes = [like[1] for like in UserLike.find_matches(current_user)]
     return render_template("all_likes.html", likes=likes)
 
 
@@ -75,7 +76,7 @@ def register():
         user = User(username=username, password=password)
         db_session.add(user)
         db_session.commit()
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -84,7 +85,7 @@ def login():
     if request.method == 'GET':
         response = make_response(render_template('login.html'))
     else:
-        response = make_response(redirect('/profile'))
+        response = make_response(redirect(url_for('profile')))
 
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
@@ -100,7 +101,7 @@ def logout():
     current_user.login_id = None
     db_session.commit()
     logout_user()
-    return redirect('/')
+    return redirect(url_for('login'))
 
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -120,6 +121,6 @@ def profile():
                 upload.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 current_user.profile_pic = '/uploads/{}'.format(filename)
         db_session.commit()
-        return redirect('/profile')
+        return redirect(url_for('profile'))
 
 

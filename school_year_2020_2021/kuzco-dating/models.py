@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, aliased
 from sqlalchemy.sql.expression import func
-    
+
 from database import Base
 
 class UserLike(Base):
@@ -34,9 +34,9 @@ class User(Base):
     username = Column(String(80), unique=True, nullable=False)
     password = Column(String(120), nullable=False)
     login_id = Column(String(36), nullable=True)
-    first_name = Column(String(120), unique=False, nullable=True) 
-    last_name = Column(String(120), unique=False, nullable=True) 
-    age = Column(Integer(), unique=False, nullable=True) 
+    first_name = Column(String(120), unique=False, nullable=True)
+    last_name = Column(String(120), unique=False, nullable=True)
+    age = Column(Integer(), unique=False, nullable=True)
     bio = Column(String(512), unique=False, nullable=True)
     profile_pic = Column(String(120), unique=False, nullable=True)
 
@@ -61,7 +61,7 @@ class User(Base):
     def find_another_random(user):
         liked_user_ids = [like.liked_user for like in user.likes]
         return User.query.filter(User.id != user.id,
-                User.id.notin_(liked_user_ids)).first()
+                User.id.notin_(liked_user_ids)).order_by(func.random()).first()
 
     def get_id(self):
         return self.login_id
