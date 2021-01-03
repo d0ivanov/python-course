@@ -34,6 +34,11 @@ def shutdown_context(exception=None):
     db_session.remove()
 
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    return redirect("/register")
+
+
 @app.route('/', methods=['GET'])
 @login_required
 def homepage():

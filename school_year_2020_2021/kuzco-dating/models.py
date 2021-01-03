@@ -16,10 +16,10 @@ class UserLike(Base):
         matches = UserLike.query.filter(UserLike.liked_by == current_user.id). \
                 join(aliased_likes,
                         UserLike.liked_user == aliased_likes.liked_by).all()
-        return [UserLike.find_users(match) for match in matches]
+        return [UserLike.__find_users(match) for match in matches]
 
     @staticmethod
-    def find_users(match):
+    def __find_users(match):
         liked_by = User.query.filter_by(id=match.liked_by).first()
         liked = User.query.filter_by(id=match.liked_user).first()
         return (liked_by, liked)

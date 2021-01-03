@@ -1,16 +1,38 @@
-<div>
-    <form method="POST", action="/profile" enctype="multipart/form-data">
-        <input type="text" name="first_name", value="{{current_user.first_name}}" />
-        <br />
-        <input type="text" name="last_name", value="{{current_user.last_name}}" />
-        <br />
-        <input type="number" name="age", value="{{current_user.age}}" />
-        <br />
-        <input type="text" name="bio", value="{{current_user.bio}}" />
-        <br />
-        <input type="file" name="profile_pic" accept=".jpeg,.jpg,.png,image/jpeg,image/jpg,image/png" />
-        <br />
-        <input type="submit" value="Update profile"/>
-    </form>
+{% extends "index.html"  %}
 
-</div>
+{% block content %}
+    <div class="row mb-5">
+        <div class="col-md-4 col-md-offset-4">
+            <img src="{{ current_user.profile_pic }}" class="img-fluid" alt="Your profile pic">
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-md-4 col-md-offset-4">
+            <form method="POST" action="/profile" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="first-name-input">First Name</label>
+                    <input type="text" name="first_name" class="form-control" id="first-name-input" value="{{ current_user.first_name }}" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="last-name-input">Last Name</label>
+                    <input type="text" name="last_name" class="form-control" id="last-name-input" value="{{ current_user.last_name }}" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="age-input">Age</label>
+                    <input type="number" name="age" class="form-control" id="age-input" value="{{ current_user.age }}" min="18" max="40">
+                </div>
+                <div class="form-group">
+                  <label for="bio-input">Biography</label>
+                  <textarea class="form-control" name="bio" id="bio-input" rows="3">
+                      {{ current_user.bio }}
+                  </textarea>
+                </div>
+                <div class="form-group">
+                  <label for="profile-pic-input">Profile Pic</label>
+                  <input type="file" class="form-control-file" id="profile-pic-input" name="profile_pic">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

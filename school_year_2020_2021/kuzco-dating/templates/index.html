@@ -9,8 +9,25 @@
     </head>
     <body>
         <div class="container-fluid">
+            {% if current_user is not none %}
             <div class="row">
-                {% block content %}{% endblock %}
+                <ul class="nav nav-pills">
+                  <li class="nav-item">
+                    <a class="nav-link active" href="/matches">My Matches</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/">Find a Match</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link disabled" href="/profile">My Profile</a>
+                  </li>
+                </ul>
+            </div>
+            {% endif %}
+            <div class="row">
+                <div class="col-lg-12">
+                    {% block content %}{% endblock %}
+                </div>
             </div>
         </div>
         <script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
