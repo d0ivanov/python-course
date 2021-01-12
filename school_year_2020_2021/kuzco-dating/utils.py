@@ -15,3 +15,7 @@ def split_in_groups(lst, group_size=3):
         limit = min(limit + group_size, len(lst))
         res.append(lst[offset:limit])
     return res
+
+def generate_room_id(sender, receiver):
+    return '_'.join(sorted([str(sender), str(receiver)]))
+

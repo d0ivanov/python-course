@@ -3,6 +3,7 @@ import os
 
 from flask import Flask
 from flask import render_template, request, redirect, make_response, url_for
+from flask_socketio import SocketIO, join_room, send
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,7 +12,7 @@ from werkzeug.utils import secure_filename
 from database import db_session, init_db
 from login import login_manager
 from models import User, UserLike
-from utils import validate_file_type, split_in_groups
+from utils import validate_file_type, split_in_groups, generate_room_id
 
 
 app = Flask(__name__)
@@ -27,6 +28,9 @@ app.add_url_rule('/uploads/<filename>', 'uploaded_file', build_only=True)
 app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
     '/uploads':  app.config['UPLOAD_FOLDER']
 })
+
+#Init app for socket.io
+socketio = SocketIO(app)
 
 
 @app.teardown_appcontext
@@ -63,6 +67,14 @@ def match():
 def get_matches():
     likes = [like[1] for like in UserLike.find_matches(current_user)]
     return render_template("all_likes.html", likes=split_in_groups(likes))
+
+
+@app.route('/chat/<user_id>', methods=['GET'])
+@login_required
+def chat(user_id):
+    receiver = User.query.filter_by(id=user_id).first()
+    # TODO: Validate that current user can chat with receiver
+    return render_template('chat.html', receiver=receiver)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -124,3 +136,19 @@ def profile():
         return redirect(url_for('profile'))
 
 
+@socketio.on('join')
+def on_join(data):
+    room_id = generate_room_id(data['sender'], data['receiver'])
+    print("Room id is {}".format(room_id))
+    join_room(room_id)
+
+
+@socketio.on('chat_message')
+def on_chat_message(data):
+    room_id = generate_room_id(data['sender'], data['receiver'])
+    print("Received chat_message: {}".format(data))
+    send(data, room=room_id)
+
+
+if __name__ == '__main__':
+    socketio.run(app)

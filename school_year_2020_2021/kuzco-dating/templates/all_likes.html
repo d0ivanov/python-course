@@ -10,6 +10,7 @@
                       <img class="card-img-top rounded" style="height: 10vw; object-fit: cover;" src="{{ user.profile_pic }}" alt="Card image cap">
                       <div class="card-body">
                           <p class="card-text">{{ user.bio }}</p>
+                          <a href="{{ url_for('chat', user_id=user.id) }}" class="btn btn-success">Chat</a>
                       </div>
                     </div>
                 </div>
